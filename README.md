@@ -46,6 +46,25 @@ In an actual deployment, you can:
 
 ---
 
+## ⚠️ Important — Troubleshooting & Stack Recreation
+
+If your deployment fails or you encounter unexpected behavior:
+
+**Do not just re-run the same stack.**
+
+Instead:
+
+1. Go to **CloudFormation → Stacks**  
+2. Select your stack (e.g., `card-api-v7`)  
+3. Choose **Delete**  
+4. Wait until it is **completely deleted**  
+5. Then **Create Stack** again  
+
+🧩 **CloudFormation may reuse existing resources** (like IAM roles or Lambda functions), which can cause validation or conflict errors.  
+Recreating the stack ensures all resources are freshly provisioned and avoids “resource already exists” issues.
+
+---
+
 ## 🚀 Deployment
 
 ### Option 1 — Deploy via AWS Console
