@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "This is a CloudFormation integration of API Gateway, Lambda, and DynamoDB"
+
+Parameters:
+
+  # BE SURE TO UPLOAD .zip FILES INTO BUCKET
+  s3BucketName:
+    Description: "Name of the S3 Bucket with Scripts"
+    Type: String
+    Default: "ylta-aws-practice-scripts"
+
+  # PARAMETERS FOR LIST
+  listS3KeyName:
+    Description: "Name of the S3 Bucket script file"
+    Type: String
+    Default: "lambda/fn-list-card.zip"
+  listFunctionName:
+    Description: "Name of the lambda list function"
+    Type: String
+    Default: "fnListFunctionPractice"
+  listFunctionHandler:
+    Description: "Handler of the lambda list function"
+    Type: String
+    Default: "fn-list-card.lambda_handler" # python-file.handler_name
+
+  # PARAMETERS FOR REGISTER
+  registerS3KeyName:
+    Description: "Name of the S3 Bucket script file"
+    Type: String
+    Default: "lambda/fn-register-card.zip"
+  registerFunctionName:
+    Description: "Name of the lambda register function"
+    Type: String
+    Default: "fnRegisterFunctionPractice"
+  registerFunctionHandler:
+    Description: "Handler of the lambda register function"
+    Type: String
+    Default: "fn-register-card.lambda_handler" # python-file.handler_name
+  
+  # PARAMETERS FOR UPDATE
+  updateS3KeyName:
+    Description: "Name of the S3 Bucket script file"
+    Type: String
+    Default: "lambda/fn-update-card.zip"
+  updateFunctionName:
+    Description: "Name of the lambda update function"
+    Type: String
+    Default: "fnUpdateFunctionPractice"
+  updateFunctionHandler:
+    Description: "Handler of the lambda update function"
+    Type: String
+    Default: "fn-update-card.lambda_handler" # python-file.handler_name
+
+Resources: 
+  restApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: "This is the REST API"
+      Name: "restApi" # Actual name in AWS
+
+  listApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "list" # Required
+      RestApiId: !Ref restApi # Requiredresource
+
+  registerApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "register" # Required
+      RestApiId: !Ref restApi # Requiredresource
+
+  updateApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "update" # Required
+      RestApiId: !Ref restApi # Requiredresource
+
+  # ------------------------------
+  # Lambda: Update Status
+  # ------------------------------
+  listLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref s3BucketName
+        S3Key: !Ref listS3KeyName
+      Description: "This is the lambda function for the List API."
+      FunctionName: !Ref listFunctionName # Actual name of the fn in AWS
+      Handler: !Ref listFunctionHandler
+      Role: !GetAtt listLambdaFunctionRole.Arn # Required
+      Runtime: "python3.12"
+      Timeout: 60
+  
+  listLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Description: !Join ["", ["Role for ", !Ref listFunctionName]]
+      Policies: 
+        - PolicyName: !Join ["-", [!Ref listFunctionName, "execution-policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                Resource: 
+                  - "arn:aws:logs:*:*:*"
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref listFunctionName, ":*"]]  
+      RoleName: "fnListFunctionPracticeRole"
+
+  registerLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref s3BucketName
+        S3Key: !Ref registerS3KeyName
+      Description: "This is the lambda function for the Register API."
+      FunctionName: !Ref registerFunctionName # Actual name of the fn in AWS
+      Handler: !Ref registerFunctionHandler
+      Role: !GetAtt registerLambdaFunctionRole.Arn # Required
+      Runtime: "python3.12"
+      Timeout: 60
+  
+  registerLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Description: !Join ["", ["Role for ", !Ref registerFunctionName]]
+      Policies: 
+        - PolicyName: !Join ["-", [!Ref registerFunctionName, "execution-policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                Resource: 
+                  - "arn:aws:logs:*:*:*"
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref registerFunctionName, ":*"]]  
+      RoleName: "fnRegisterFunctionPracticeRole"
+
+  updateLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref s3BucketName
+        S3Key: !Ref updateS3KeyName
+      Description: "This is the lambda function for the Update API."
+      FunctionName: !Ref updateFunctionName # Actual name of the fn in AWS
+      Handler: !Ref updateFunctionHandler
+      Role: !GetAtt updateLambdaFunctionRole.Arn # Required
+      Runtime: "python3.12"
+      Timeout: 60
+  
+  updateLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Description: !Join ["", ["Role for ", !Ref updateFunctionName]]
+      Policies: 
+        - PolicyName: !Join ["-", [!Ref updateFunctionName, "execution-policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                Resource: 
+                  - "arn:aws:logs:*:*:*"
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref updateFunctionName, ":*"]]  
+      RoleName: "fnUpdateFunctionPracticeRole"
+
+  # ------------------------------
+  # API Gateway Methods
+  # ------------------------------
+  listRestMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: "NONE"
+      HttpMethod: "GET"
+      Integration:
+        Type: "AWS_PROXY"
+        IntegrationHttpMethod: "POST"
+        Uri: !Join ["", ["arn:aws:apigateway:", !Ref AWS::Region, ":lambda:path/2015-03-31/functions/", !GetAtt listLambdaFunction.Arn, "/invocations"]]
+      RestApiId: !Ref restApi
+      ResourceId: !Ref listApiResource
+
+  registerRestMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      Integration:
+        Type: "AWS_PROXY"
+        IntegrationHttpMethod: "POST"
+        Uri: !Join ["", ["arn:aws:apigateway:", !Ref AWS::Region, ":lambda:path/2015-03-31/functions/", !GetAtt registerLambdaFunction.Arn, "/invocations"]]
+      RestApiId: !Ref restApi
+      ResourceId: !Ref registerApiResource
+
+  updateRestMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      Integration:
+        Type: "AWS_PROXY"
+        IntegrationHttpMethod: "POST"
+        Uri: !Join ["", ["arn:aws:apigateway:", !Ref AWS::Region, ":lambda:path/2015-03-31/functions/", !GetAtt updateLambdaFunction.Arn, "/invocations"]]
+      RestApiId: !Ref restApi
+      ResourceId: !Ref updateApiResource

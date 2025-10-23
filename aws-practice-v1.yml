@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "This is a CloudFormation integration of API Gateway, Lambda, and DynamoDB"
+
+Resources: 
+  restApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: "This is the REST API"
+      Name: "restApi" # Actual name in AWS
+
+  listApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "list" # Required
+      RestApiId: !Ref restApi # Requiredresource
+
+  registerApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "register" # Required
+      RestApiId: !Ref restApi # Requiredresource
+
+  updateApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt restApi.RootResourceId # Required
+      PathPart: "update" # Required
+      RestApiId: !Ref restApi # Requiredresource
